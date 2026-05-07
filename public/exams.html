@@ -866,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function() {
             gen.status = 'generating'; updateQueueUI();
             const controller = new AbortController(); gen.controller = controller; isProcessingGeneration = true;
             try {
-                const response = await fetch('/api/generate-questions', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({subject:gen.subject,questionCount:gen.questionCount}), signal:controller.signal });
+                const response = await fetch(`${window.API_BASE_URL}/api/generate-questions`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({subject:gen.subject,questionCount:gen.questionCount}), signal:controller.signal });
                 const data = await response.json();
                 if (data.error) throw new Error(data.details || data.error);
                 gen.status = 'completed'; gen.questions = data.questions; delete gen.controller;
@@ -1220,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleBtn.addEventListener('click', (e) => { e.stopPropagation(); bodyDiv.classList.toggle('collapsed'); toggleBtn.classList.toggle('rotated'); });
             popup.querySelector('.explanation-close').addEventListener('click', () => closePopup());
             try {
-                const response = await fetch('/api/explain', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
+                const response = await fetch(`${window.API_BASE_URL}/api/explain`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
                 const data = await response.json();
                 bodyDiv.innerHTML = `<p>${(data.explanation || "No explanation available.").replace(/\n/g,'<br>')}</p>`;
             } catch(err) { bodyDiv.innerHTML = `<p style="color:var(--wrong-color);">Error: ${err.message}</p>`; }
@@ -1250,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleBtn.addEventListener('click', (e) => { e.stopPropagation(); bodyDiv.classList.toggle('collapsed'); toggleBtn.classList.toggle('rotated'); });
             popup.querySelector('.explanation-close').addEventListener('click', () => closeFeedbackPopup());
             try {
-                const response = await fetch('/api/explain', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
+                const response = await fetch(`${window.API_BASE_URL}/api/explain`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt}) });
                 const data = await response.json();
                 bodyDiv.innerHTML = `<div style="white-space:pre-wrap;">${(data.explanation||"No feedback available.").replace(/\n/g,'<br>')}</div>`;
             } catch(err) { bodyDiv.innerHTML = `<p style="color:var(--wrong-color);">Error: ${err.message}</p>`; }
