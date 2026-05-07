@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Bete Fetena - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+
+        :root {
+            --bg-body: #f0ece4;
+            --bg-sidebar: #fdf9f4;
+            --sidebar-text: #1a1200;
+            --text-primary: #1a1200;
+            --card-bg: #fff;
+            --shadow: 0 20px 50px rgba(0,0,0,0.12);
+            --btn-bg: #00008B;
+            --btn-hover: #FFA500;
+            --cat-bg: #f9f5ef;
+            --option-bg: #f0ece4;
+            --border-light: rgba(0,0,0,0.1);
+            --gold: #FFA500;
+            --navy: #00008B;
+            --ink: #1a1200;
+            --cream: #fdf9f4;
+            --grain-opacity: 0.04;
+        }
+        body.dark {
+            --bg-body: #0d0b07;
+            --bg-sidebar: #13110c;
+            --sidebar-text: #FFA500;
+            --text-primary: #f0e8d0;
+            --card-bg: #1a1610;
+            --shadow: 0 20px 60px rgba(0,0,0,0.6);
+            --btn-bg: #FFA500;
+            --btn-hover: #00008B;
+            --cat-bg: #1e1a12;
+            --option-bg: #211d14;
+            --border-light: rgba(255,255,255,0.08);
+            --gold: #FFA500;
+            --navy: #4466dd;
+            --ink: #f0e8d0;
+            --cream: #13110c;
+            --grain-opacity: 0.06;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            transition: background 0.4s, color 0.4s;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+            opacity: var(--grain-opacity);
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .sidebar {
+            height: 100%; width: 0; position: fixed;
+            top: 0; left: 0;
+            background: var(--bg-sidebar);
+            overflow-x: hidden; transition: 0.35s cubic-bezier(0.4,0,0.2,1);
+            padding-top: 80px; z-index: 1000;
+            box-shadow: 4px 0 40px rgba(0,0,0,0.15);
+            border-right: 1px solid var(--border-light);
+        }
+        .sidebar a {
+            padding: 14px 28px;
+            text-decoration: none;
+            font-size: 16px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            color: var(--sidebar-text);
+            display: flex; align-items: center;
+            transition: background 0.2s, padding-left 0.2s;
+        }
+        .sidebar a:hover { background: rgba(255,165,0,0.08); padding-left: 36px; }
+        .sidebar .closebtn {
+            position: absolute; top: 16px; right: 24px;
+            font-size: 28px; color: var(--sidebar-text);
+            padding: 0 !important;
+        }
+        .sidebar .closebtn:hover { background: transparent !important; padding-left: 0 !important; }
+        .sidebar .logout {
+            color: #e05555; margin-top: 30px;
+            border-top: 1px solid var(--border-light);
+        }
+        body.dark .sidebar .logout { border-top-color: rgba(255,255,255,0.08); }
+
+        .main { padding: 0 16px }
+
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 4px; padding: 14px 0;
+            border-bottom: 1px solid var(--border-light);
+            min-height: 74px;
+            position: relative;
+        }
+        .top-bar::after {
+            content: '';
+            position: absolute; bottom: -1px; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            opacity: 0.5;
+        }
+
+        .openbtn {
+            font-size: 30px; cursor: pointer;
+            background: transparent; border: none;
+            padding: 6px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .openbtn:hover { background: rgba(255,165,0,0.1); }
+        .openbtn img { width: 28px; height: 28px; }
+
+        .logo-area { text-align: center; flex-grow: 1 }
+        .logo-area h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.7rem; font-weight: 700;
+            margin: 0; line-height: 1.2;
+            letter-spacing: 0.05em;
+        }
+        .logo-area h1 .bete  { color: var(--navy) }
+        .logo-area h1 .fetena { color: var(--gold) }
+        body.dark .logo-area h1 .bete  { color: #6688ff }
+        body.dark .logo-area h1 .fetena { color: var(--gold) }
+
+        .logo-area p {
+            color: var(--text-primary); opacity: 0.6;
+            font-size: 0.72rem; font-weight: 500;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            margin-top: 3px;
+        }
+        img#logoImg { height: 40px; margin-right: 4px; vertical-align: middle }
+
+        .heartbeat-btn {
+            background: linear-gradient(135deg, var(--btn-bg), #0000c8);
+            color: white; border: none;
+            padding: 10px 20px; border-radius: 40px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; white-space: nowrap;
+            box-shadow: 0 4px 20px rgba(0,0,139,0.35);
+            outline: 2px solid var(--gold);
+            outline-offset: 4px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.04em;
+        }
+        .heartbeat-btn:hover {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 8px 30px rgba(0,0,139,0.45);
+            background: linear-gradient(135deg, #FFA500, #ff8800);
+        }
+        body.dark .heartbeat-btn {
+            background: linear-gradient(135deg, #FFA500, #ff8800);
+            box-shadow: 0 4px 20px rgba(255,165,0,0.4);
+        }
+        body.dark .heartbeat-btn:hover {
+            background: linear-gradient(135deg, #00008B, #0000c8);
+        }
+
+        .hero-container {
+            position: relative; width: 100vw;
+            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
+            margin-bottom: 0; overflow: hidden;
+        }
+        .hero-image { width: 100%; height: auto; display: block }
+
+        .hero-container::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                to bottom,
+                rgba(0,0,0,0.15) 0%,
+                rgba(0,0,0,0) 40%,
+                rgba(0,0,0,0.55) 100%
+            );
+            z-index: 1;
+        }
+
+        .hero-text {
+            position: absolute; bottom: 6%; left: 0; right: 0;
+            text-align: center; color: white;
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem; font-weight: 600;
+            letter-spacing: 0.04em;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+            width: 90%; margin: 0 auto;
+            display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 0.3rem;
+            z-index: 2;
+        }
+
+        .cta-wrapper {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+        .cta-wrapper::before {
+            content: '';
+            display: block;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold) 30%, var(--navy) 70%, transparent);
+            opacity: 0.3;
+            margin-bottom: 20px;
+        }
+
+        .carousel-container {
+            position: relative; width: 100vw;
+            left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw;
+            overflow: hidden; margin-top: 0; margin-bottom: 0;
+            touch-action: pan-y pinch-zoom;
+        }
+        .carousel-slides {
+            display: flex; transition: transform 0.5s ease-in-out;
+            gap: 12px; padding: 0 20px; cursor: grab;
+        }
+        .carousel-slides:active { cursor: grabbing }
+        .carousel-slide {
+            flex: 0 0 85%; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+        }
+        .carousel-slide img { width: 100%; height: auto; display: block; pointer-events: none }
+        .carousel-dots { text-align: center; margin-top: 0; padding: 14px 0 }
+        .dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; background: rgba(0,0,0,0.2); margin: 0 4px;
+            cursor: pointer; transition: all 0.3s;
+        }
+        body.dark .dot { background: rgba(255,255,255,0.2) }
+        .dot.active {
+            background: var(--gold); width: 24px;
+            border-radius: 4px;
+        }
+
+        .plans-section {
+            margin: 0 -16px;
+            padding: 40px 0 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        .plans-section::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 20% 50%, rgba(0,0,139,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 50%, rgba(255,165,0,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        body.dark .plans-section::before {
+            background: radial-gradient(ellipse at 20% 50%, rgba(68,102,255,0.1) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 50%, rgba(255,165,0,0.1) 0%, transparent 60%);
+        }
+
+        .plans-title {
+            font-family: 'Cinzel', serif;
+            text-align: center;
+            font-size: 1.1rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            opacity: 0.45;
+            margin-bottom: 28px;
+            font-weight: 400;
+        }
+
+        .plan-cards {
+            display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 20px;
+            width: 100%; padding: 0 16px;
+            margin: 0 auto; box-sizing: border-box;
+        }
+
+        .plan-card {
+            flex: 1; min-width: 240px; max-width: 300px;
+            border-radius: 24px; padding: 32px 20px 28px;
+            text-align: center;
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s;
+            color: var(--text-primary);
+            position: relative; overflow: hidden;
+            cursor: default;
+        }
+        .plan-card:hover { transform: translateY(-10px) scale(1.02); }
+
+        .plan-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 3px;
+        }
+
+        .plan-free {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .plan-free::before {
+            background: linear-gradient(90deg, #b0c8e8, #d0e3ff, #b0c8e8);
+        }
+        .plan-free:hover {
+            box-shadow: 0 20px 40px rgba(0,0,139,0.12);
+        }
+
+        .plan-zgju {
+            background: linear-gradient(160deg, #1a1f3c 0%, #0d1130 100%);
+            border: 1px solid rgba(255,165,0,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,60,0.4);
+            color: #f0e8d0;
+        }
+        .plan-zgju::before {
+            background: linear-gradient(90deg, #cc7700, #FFA500, #ffcc44, #FFA500, #cc7700);
+            background-size: 200% 100%;
+            animation: shimmer 3s linear infinite;
+        }
+        .plan-zgju:hover {
+            box-shadow: 0 20px 50px rgba(0,0,80,0.5), 0 0 30px rgba(255,165,0,0.15);
+        }
+        .plan-zgju .plan-price { color: #FFA500 }
+        .plan-zgju .plan-features li::before { color: #FFA500 }
+
+        .plan-qeleme {
+            background: linear-gradient(160deg, #0c0a06 0%, #1a1400 100%);
+            border: 1px solid rgba(255,165,0,0.45);
+            box-shadow: 0 12px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,200,50,0.15);
+            color: #f5e8c0;
+            position: relative;
+        }
+        .plan-qeleme::before {
+            background: linear-gradient(90deg, #996600, #FFD700, #fff7aa, #FFD700, #996600);
+            background-size: 200% 100%;
+            animation: shimmer 2s linear infinite;
+            height: 4px;
+        }
+        .plan-qeleme::after {
+            content: '';
+            position: absolute; bottom: 0; right: 0;
+            width: 80px; height: 80px;
+            background: radial-gradient(circle at bottom right, rgba(255,215,0,0.12), transparent 70%);
+            border-radius: 0 0 24px 0;
+            pointer-events: none;
+        }
+        .plan-qeleme:hover {
+            box-shadow: 0 24px 60px rgba(0,0,0,0.7), 0 0 40px rgba(255,200,0,0.2), inset 0 1px 0 rgba(255,220,50,0.2);
+        }
+        .plan-qeleme .plan-price { color: #FFD700 }
+        .plan-qeleme .plan-features li::before { color: #FFD700 }
+
+        .plan-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #cc9900, #FFD700);
+            color: #0c0a06;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            padding: 3px 12px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        @keyframes shimmer {
+            0%   { background-position: -200% 0 }
+            100% { background-position:  200% 0 }
+        }
+
+        .plan-card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem; font-weight: 700;
+            margin: 10px 0 5px; letter-spacing: 0.08em;
+        }
+        .plan-price {
+            font-size: 1.9rem; font-weight: 700;
+            margin: 16px 0; color: var(--text-primary);
+            font-variant-numeric: tabular-nums;
+        }
+        .plan-price small { font-size: 0.9rem; font-weight: 400; opacity: 0.7 }
+        .plan-features {
+            list-style: none; margin: 20px 0;
+            padding: 0; text-align: left;
+        }
+        .plan-features li {
+            margin: 10px 0; font-size: 0.95rem;
+            display: flex; align-items: center;
+        }
+        .plan-features li::before {
+            content: '✓'; color: #4CAF50;
+            font-weight: 900; margin-right: 10px;
+            font-size: 0.85rem;
+        }
+
+        .upgrade-btn {
+            border: none; padding: 12px 20px;
+            border-radius: 40px; cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700; margin-top: 14px; width: 100%;
+            font-size: 0.95rem; letter-spacing: 0.06em;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+        }
+        .upgrade-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .free-btn {
+            background: transparent;
+            border: 1.5px solid var(--navy);
+            color: var(--navy);
+        }
+        body.dark .free-btn { border-color: rgba(180,200,255,0.4); color: #99aaff }
+
+        .zgju-btn {
+            background: linear-gradient(135deg, #FFA500, #ff8c00);
+            color: #0d1130;
+            box-shadow: 0 4px 16px rgba(255,165,0,0.35);
+        }
+        .qeleme-btn {
+            background: linear-gradient(135deg, #FFD700, #cc9900);
+            color: #0c0a06;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+        }
+
+        .content-area {
+            background: transparent; padding: 0 20px 0 20px;
+            margin-top: 0; min-height: 300px;
+        }
+
+        .custom-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px; padding: 28px 24px;
+            width: 90%; max-width: 360px; text-align: center;
+            color: var(--text-primary);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-light);
+        }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 16px; }
+        .modal-buttons button {
+            padding: 10px 24px; border-radius: 30px; border: none;
+            cursor: pointer; font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+        .modal-confirm { background: var(--btn-bg); color: white; }
+        .modal-cancel  { background: var(--option-bg); color: var(--text-primary); }
+
+        .sidebar a img { filter: brightness(0) saturate(100%) invert(9%) sepia(90%) saturate(3500%) hue-rotate(230deg) !important; }
+        body.dark .sidebar a img { filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(500%) hue-rotate(350deg) !important; }
+        .openbtn img { filter: brightness(0) saturate(100%) invert(9%) sepia(90%) saturate(3500%) hue-rotate(230deg) !important; }
+        body.dark .openbtn img { filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(500%) hue-rotate(350deg) !important; }
+
+        @media (max-width: 768px) {
+            .plan-card { min-width: 200px; max-width: 100% }
+            .hero-text { font-size: 1rem; bottom: 3% }
+            .top-bar { min-height: 60px; padding: 8px 0 }
+            img#logoImg { height: 32px }
+            .logo-area h1 { font-size: 1.3rem }
+            .logo-area p { font-size: 0.65rem }
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .plan-card {
+            opacity: 0;
+            animation: fadeSlideUp 0.6s cubic-bezier(0.34,1.2,0.64,1) forwards;
+        }
+        .plan-free   { animation-delay: 0.15s }
+        .plan-zgju   { animation-delay: 0.3s }
+        .plan-qeleme { animation-delay: 0.45s }
+    </style>
+</head>
+<body>
+
+<div id="mySidebar" class="sidebar">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <div id="sidebarLinks"></div>
+    <a href="#" id="darkModeToggle" style="display:flex;align-items:center;">
+        <img id="darkModeIcon" src="Moon.png" style="width:24px;height:24px;margin-right:12px;">
+        <span id="darkModeText">Dark Mode</span>
+    </a>
+    <a href="#" class="logout" onclick="confirmLogout()" style="display:flex;align-items:center;">
+        <img src="Logout.png" style="width:24px;height:24px;margin-right:12px;">
+        Logout
+    </a>
+</div>
+
+<div id="main" class="main">
+    <div class="top-bar">
+        <button class="openbtn" onclick="openNav()">
+            <img src="Menu.png" alt="Menu">
+        </button>
+        <img id="logoImg" src="Bete_Fetena_Logo.png" alt="Logo" style="height:40px;margin-right:2px;vertical-align:middle;">
+        <div class="logo-area">
+            <h1><span class="bete">Bete</span><span class="fetena"> Fetena</span></h1>
+            <p>Examine Yourself, Show Who You Are.</p>
+        </div>
+    </div>
+    <div id="dynamicContent" class="content-area"></div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+    if (!checkAuth()) { /* redirected */ }
+    sessionStorage.setItem('currentPage', 'home.html');
+    initDarkMode();
+    buildSidebar('home');
+
+    function updateDarkModeToggleIcon() {
+        const icon = document.getElementById('darkModeIcon');
+        const text = document.getElementById('darkModeText');
+        if (document.body.classList.contains('dark')) {
+            icon.src = 'Sun.png';
+            text.textContent = 'Light Mode';
+        } else {
+            icon.src = 'Moon.png';
+            text.textContent = 'Dark Mode';
+        }
+    }
+
+    const originalToggle = toggleDarkMode;
+    toggleDarkMode = function() {
+        originalToggle();
+        updateDarkModeToggleIcon();
+    };
+
+    document.getElementById('darkModeToggle').addEventListener('click', function(e) {
+        e.preventDefault(); toggleDarkMode();
+    });
+    updateDarkModeToggleIcon();
+
+    (function() {
+        history.pushState({ home: true }, '', '#home');
+        window.addEventListener('popstate', function(event) {
+            showConfirmModal('Are you sure you want to log out?',
+                function() { logout(); },
+                function() { history.pushState({ home: true }, '', '#home'); }
+            );
+            history.pushState({ home: true }, '', '#home');
+        });
+    })();
+
+    function showComingSoonModal() {
+        const modal = document.createElement('div');
+        modal.className = 'custom-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h4 style="margin-bottom: 12px;">✨ Coming Soon ✨</h4>
+                <p>Payment integration is under development. Stay tuned for updates!</p>
+                <div class="modal-buttons">
+                    <button class="modal-confirm" id="comingSoonOk">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#comingSoonOk').addEventListener('click', () => modal.remove());
+    }
+
+    let carouselInterval = null;
+    let currentSlideIndex = 0;
+    let slideCount = 4;
+    let slidesContainer = null;
+    let autoScrollActive = true;
+    let totalSlides = 0;
+
+    function initCarousel() {
+        slidesContainer = document.querySelector('.carousel-slides');
+        if (!slidesContainer) return;
+        const firstSlide = slidesContainer.children[0].cloneNode(true);
+        slidesContainer.appendChild(firstSlide);
+        totalSlides = slideCount + 1;
+        const dots = document.querySelectorAll('.dot');
+        let startX = 0, startTranslate = 0, isDragging = false, dragStartIndex = 0;
+
+        function getSlideUnit() {
+            const slide = slidesContainer.children[0];
+            const gap = parseFloat(getComputedStyle(slidesContainer).gap) || 12;
+            return slide.offsetWidth + gap;
+        }
+        function goToSlide(index, withTransition = true) {
+            if (withTransition) slidesContainer.style.transition = 'transform 0.5s ease-in-out';
+            else slidesContainer.style.transition = 'none';
+            const unit = getSlideUnit();
+            slidesContainer.style.transform = `translateX(-${index * unit}px)`;
+            const activeDotIndex = index % slideCount;
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === activeDotIndex));
+        }
+        function nextSlide() {
+            if (!autoScrollActive) return;
+            currentSlideIndex++;
+            goToSlide(currentSlideIndex, true);
+            if (currentSlideIndex === totalSlides - 1) {
+                setTimeout(() => {
+                    slidesContainer.style.transition = 'none';
+                    currentSlideIndex = 0;
+                    goToSlide(currentSlideIndex, false);
+                    slidesContainer.offsetHeight;
+                    slidesContainer.style.transition = 'transform 0.5s ease-in-out';
+                    dots.forEach((dot, i) => dot.classList.toggle('active', i === 0));
+                }, 500);
+            }
+        }
+        function startAutoScroll() {
+            if (carouselInterval) clearInterval(carouselInterval);
+            carouselInterval = setInterval(() => nextSlide(), 3000);
+        }
+        function stopAutoScroll() {
+            if (carouselInterval) clearInterval(carouselInterval);
+            carouselInterval = null;
+        }
+
+        slidesContainer.addEventListener('touchstart', (e) => {
+            if (!autoScrollActive) return;
+            startX = e.touches[0].clientX;
+            dragStartIndex = currentSlideIndex;
+            startTranslate = getSlideUnit() * currentSlideIndex;
+            isDragging = true; stopAutoScroll();
+            slidesContainer.style.transition = 'none';
+        });
+        slidesContainer.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.touches[0].clientX - startX;
+            slidesContainer.style.transform = `translateX(-${startTranslate - deltaX}px)`;
+            e.preventDefault();
+        });
+        slidesContainer.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const deltaX = e.changedTouches[0].clientX - startX;
+            const unit = getSlideUnit();
+            let newIndex = dragStartIndex;
+            if (Math.abs(deltaX) > unit / 4) {
+                if (deltaX > 0) newIndex = Math.max(0, dragStartIndex - 1);
+                else newIndex = Math.min(totalSlides - 1, dragStartIndex + 1);
+            }
+            currentSlideIndex = newIndex;
+            goToSlide(currentSlideIndex, true);
+            setTimeout(() => startAutoScroll(), 5000);
+        });
+
+        dots.forEach((dot, idx) => {
+            dot.onclick = () => {
+                autoScrollActive = false; stopAutoScroll();
+                currentSlideIndex = idx;
+                goToSlide(currentSlideIndex, true);
+                setTimeout(() => { autoScrollActive = true; startAutoScroll(); }, 5000);
+            };
+        });
+
+        startAutoScroll();
+        goToSlide(0, false);
+        window.addEventListener('resize', () => {
+            if (autoScrollActive) goToSlide(currentSlideIndex, false);
+        });
+    }
+
+    function waveAnimation() {
+        const container = document.getElementById("heroText");
+        if (!container) return;
+        const originalText = container.innerText;
+        const words = originalText.split(" ");
+        container.innerHTML = "";
+        words.forEach((word, idx) => {
+            const span = document.createElement("span");
+            span.innerText = word + " ";
+            span.style.display = "inline-block";
+            span.style.opacity = "0";
+            span.style.transform = "translateY(-30px)";
+            span.style.transition = `opacity 0.4s cubic-bezier(0.2,0.9,0.4,1.1) ${idx*0.07}s, transform 0.4s cubic-bezier(0.2,0.9,0.4,1.1) ${idx*0.07}s`;
+            container.appendChild(span);
+        });
+        setTimeout(() => {
+            container.querySelectorAll("span").forEach(span => {
+                span.style.opacity = "1";
+                span.style.transform = "translateY(0)";
+            });
+        }, 50);
+    }
+
+    function renderHome() {
+        const bannerImages = [
+            'Bete_Fetena_Banner_1.png','Bete_Fetena_Banner_2.png',
+            'Bete_Fetena_Banner_3.png','Bete_Fetena_Banner_4.png'
+        ];
+        let slidesHtml = '', dotsHtml = '';
+        for (let i = 0; i < slideCount; i++) {
+            slidesHtml += `<div class="carousel-slide"><img src="${bannerImages[i]}" alt="Banner ${i+1}" onerror="this.src='https://placehold.co/1663x640?text=Banner+${i+1}'"></div>`;
+            dotsHtml += `<span class="dot"></span>`;
+        }
+
+        const html = `
+            <div class="hero-container">
+                <img src="Bete_Fetena_Hero.png" alt="Hero" class="hero-image">
+                <div class="hero-text" id="heroText">Welcome to Bete Fetena, a platform where Ethiopian students unlock their academic potential!</div>
+            </div>
+
+            <div class="cta-wrapper">
+                <button class="heartbeat-btn" onclick="navigateTo('exams.html')">Take an Exam</button>
+            </div>
+
+            <div class="carousel-container">
+                <div class="carousel-slides">${slidesHtml}</div>
+                <div class="carousel-dots">${dotsHtml}</div>
+            </div>
+
+            <div class="plans-section">
+                <p class="plans-title">Choose Your Path</p>
+                <div class="plan-cards">
+
+                    <div class="plan-card plan-free">
+                        <h3>Free</h3>
+                        <div class="plan-price">ETB 0 <small>/ mo</small></div>
+                        <ul class="plan-features">
+                            <li>150 questions</li>
+                        </ul>
+                        <button class="upgrade-btn free-btn" onclick="showComingSoonModal()">Start for free</button>
+                    </div>
+
+                    <div class="plan-card plan-zgju">
+                        <h3>Zgju</h3>
+                        <div class="plan-price">ETB 199 <small>/ mo</small></div>
+                        <ul class="plan-features">
+                            <li>1,000 Questions</li>
+                            <li>Chart visualization</li>
+                        </ul>
+                        <button class="upgrade-btn zgju-btn" onclick="showComingSoonModal()">Upgrade</button>
+                    </div>
+
+                    <div class="plan-card plan-qeleme">
+                        <div class="plan-badge">✦ Elite</div>
+                        <h3>Qeleme</h3>
+                        <div class="plan-price">ETB 399 <small>/ mo</small></div>
+                        <ul class="plan-features">
+                            <li>2,500 questions</li>
+                            <li>Chart visualization</li>
+                            <li>Book recommendations</li>
+                        </ul>
+                        <button class="upgrade-btn qeleme-btn" onclick="showComingSoonModal()">Upgrade to Elite</button>
+                    </div>
+
+                </div>
+            </div>
+        `;
+
+        document.getElementById("dynamicContent").innerHTML = html;
+        currentSlideIndex = 0;
+        autoScrollActive = true;
+        initCarousel();
+        waveAnimation();
+    }
+
+    renderHome();
+</script>
+</body>
+</html>
