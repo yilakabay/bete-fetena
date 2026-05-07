@@ -1,4 +1,6 @@
-// Shared functions for Bete Fetena
+// shared.js - Bete Fetena
+// Backend URL (Render)
+window.API_BASE_URL = 'https://bete-fetena-backend.onrender.com';
 
 function getUserPhone() {
     return sessionStorage.getItem('userPhone');
@@ -200,7 +202,7 @@ function navigateTo(url) {
 }
 
 function refreshNavbarProfile() {
-    // Optional: can be implemented if needed
+    // optional
 }
 
 function switchToAccount(accountId) {
