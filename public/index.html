@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Bete Fetena - Login</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:white;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+        .form-wrapper{width:100%;max-width:400px;margin:0 auto}
+        .logo-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px}
+        .logo-row img{height:50px;width:auto}
+        .logo-row h1{font-size:2.5rem;margin:0;color:#00008B}
+        .slogan{text-align:center;color:#00008B;font-size:0.9rem;font-style:italic;margin-bottom:25px}
+        h2{text-align:center;margin-bottom:25px;color:#333}
+        .input-group{margin-bottom:15px;position:relative}
+        .two-cols{display:flex;gap:10px}
+        .two-cols .input-group{flex:1}
+        input{width:100%;padding:10px 40px 10px 12px;border:1px solid #00008B;border-radius:30px;font-size:14px;background:#f9f9f9}
+        input:focus{outline:none;border:2px solid #00008B;background:white}
+        button{width:100%;padding:10px;background:#00008B;color:white;border:none;border-radius:30px;font-size:16px;font-weight:bold;cursor:pointer;transition:transform 0.2s,background 0.2s}
+        button:active{transform:scale(0.98);background:#FFA500}
+        .error{background:#ffebee;color:#c62828;padding:8px;border-radius:30px;margin-bottom:15px;font-size:14px;text-align:center}
+        .switch-text{text-align:center;margin-top:15px;color:#555;font-size:14px}
+        .switch-text span{color:#00008B;cursor:pointer;font-weight:bold;text-decoration:underline}
+        .hidden{display:none}
+        .password-wrapper{position:relative}
+        .toggle-password{position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;user-select:none;color:#666;display:flex;align-items:center;justify-content:center;}
+        .toggle-password img{width:20px;height:20px;}
+        .custom-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000}
+        .modal-content{background:white;border-radius:20px;padding:20px;width:90%;max-width:350px;text-align:center}
+        .modal-buttons{display:flex;gap:10px;justify-content:center;margin-top:15px}
+        .modal-buttons button{padding:8px 20px;border-radius:30px;border:none;cursor:pointer;font-weight:bold}
+        .account-list{list-style:none;margin:15px 0;padding:0;text-align:left}
+        .account-list li{padding:10px;margin:5px 0;background:#f0f0f0;border-radius:30px;cursor:pointer;font-weight:bold;text-align:center}
+        .account-list li:hover{background:#00008B;color:white}
+    </style>
+</head>
+<body>
+<div class="form-wrapper">
+    <div class="logo-row">
+        <img id="loginLogo" src="Bete_Fetena_Logo.png" style="height:50px;">
+        <h1>Bete Fetena</h1>
+    </div>
+    <div class="slogan">Examine Yourself, Show Who You Are.</div>
+    <div id="errorBox" class="error hidden"></div>
+
+    <div id="loginForm">
+        <h2>Welcome Back Examinee!</h2>
+        <div class="input-group"><input type="tel" id="loginPhone" placeholder="Phone" maxlength="20"></div>
+        <div class="input-group password-wrapper">
+            <input type="password" id="loginPassword" placeholder="Password" maxlength="6" inputmode="numeric">
+            <span class="toggle-password" id="toggleLoginPassword"><img src="Eye.png" alt="Show"></span>
+        </div>
+        <button id="loginBtn">Login</button>
+        <div class="switch-text">Don't have an account? <span id="showRegister">Register</span></div>
+    </div>
+
+    <div id="registerForm" class="hidden">
+        <h2>Create Account</h2>
+        <div class="input-group"><input type="tel" id="regPhone" placeholder="Phone" maxlength="20"></div>
+        <div class="two-cols">
+            <div class="input-group"><input type="text" id="regName" placeholder="Name"></div>
+            <div class="input-group"><input type="text" id="regFatherName" placeholder="Father's Name"></div>
+        </div>
+        <div class="input-group"><input type="text" id="regGrandFatherName" placeholder="Grandfather's Name (optional)"></div>
+        <div class="input-group password-wrapper">
+            <input type="password" id="regPassword" placeholder="Password" maxlength="6" inputmode="numeric">
+            <span class="toggle-password" id="toggleRegisterPassword"><img src="Eye.png" alt="Show"></span>
+        </div>
+        <div class="input-group password-wrapper">
+            <input type="password" id="regConfirmPassword" placeholder="Confirm Password" maxlength="6" inputmode="numeric">
+        </div>
+        <button id="registerBtn">Register</button>
+        <div class="switch-text">Already have an account? <span id="showLogin">Login</span></div>
+    </div>
+</div>
+
+<script>
+    function normalizePhone(phone) {
+        let p = phone.trim();
+        if (/^09[0-9]{8}$/.test(p)) return '+251' + p.substring(1);
+        if (/^07[0-9]{8}$/.test(p)) return '+251' + p.substring(1);
+        if (/^\+251[79][0-9]{8}$/.test(p)) return p;
+        if (/^251[79][0-9]{8}$/.test(p)) return '+' + p;
+        return null;
+    }
+    function isValidPassword(p) { return /^\d{6}$/.test(p); }
+    function showError(msg) {
+        let e = document.getElementById('errorBox');
+        e.textContent = msg;
+        e.classList.remove('hidden');
+        setTimeout(() => e.classList.add('hidden'), 3000);
+    }
+
+    const loginPassword = document.getElementById('loginPassword');
+    const toggleLogin = document.getElementById('toggleLoginPassword');
+    toggleLogin.addEventListener('click', () => {
+        const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        loginPassword.setAttribute('type', type);
+        toggleLogin.querySelector('img').src = type === 'password' ? 'Eye.png' : 'Slashed_Eye.png';
+    });
+
+    const regPassword = document.getElementById('regPassword');
+    const toggleReg = document.getElementById('toggleRegisterPassword');
+    toggleReg.addEventListener('click', () => {
+        const type = regPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        regPassword.setAttribute('type', type);
+        toggleReg.querySelector('img').src = type === 'password' ? 'Eye.png' : 'Slashed_Eye.png';
+    });
+
+    document.getElementById('showRegister').onclick = () => {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('errorBox').classList.add('hidden');
+        document.getElementById('loginPhone').value = '';
+        document.getElementById('loginPassword').value = '';
+        history.replaceState({ page: 'register' }, '', '#register');
+    };
+    document.getElementById('showLogin').onclick = () => {
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('errorBox').classList.add('hidden');
+        document.getElementById('regPhone').value = '';
+        document.getElementById('regName').value = '';
+        document.getElementById('regFatherName').value = '';
+        document.getElementById('regGrandFatherName').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regConfirmPassword').value = '';
+        history.replaceState({ page: 'login' }, '', '#login');
+    };
+
+    document.getElementById('loginBtn').onclick = () => {
+        let rawPhone = document.getElementById('loginPhone').value.trim();
+        let phone = normalizePhone(rawPhone);
+        let pw = document.getElementById('loginPassword').value.trim();
+        if (!phone) { showError('Invalid phone number'); return; }
+        if (!isValidPassword(pw)) { showError('Password must be 6 digits'); return; }
+        
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let phoneData = users[phone];
+        if (!phoneData) { showError('Phone number not registered'); return; }
+        
+        if (!phoneData.accounts) {
+            if (phoneData.password !== pw) { showError('Invalid password'); return; }
+            const newAccountId = 'default-' + Date.now();
+            const newAccount = {
+                accountId: newAccountId,
+                name: phoneData.name || '',
+                father: phoneData.father || '',
+                grand: phoneData.grand || '',
+                password: phoneData.password,
+                plan: phoneData.plan || 'free',
+                profilePic: phoneData.profilePic || null,
+                examHistory: phoneData.examHistory || [],
+                dashboardRange: phoneData.dashboardRange || 'last7days',
+                dashboardCategory: phoneData.dashboardCategory || 'national'
+            };
+            phoneData.accounts = [newAccount];
+            delete phoneData.name;
+            delete phoneData.father;
+            delete phoneData.grand;
+            delete phoneData.password;
+            delete phoneData.plan;
+            delete phoneData.profilePic;
+            delete phoneData.examHistory;
+            delete phoneData.dashboardRange;
+            delete phoneData.dashboardCategory;
+            users[phone] = phoneData;
+            localStorage.setItem('users', JSON.stringify(users));
+            sessionStorage.setItem('userPhone', phone);
+            sessionStorage.setItem('currentAccountId', newAccountId);
+            sessionStorage.setItem('currentPage', 'home.html');
+            window.location.href = 'home.html';
+            return;
+        }
+        
+        const matchingAccounts = phoneData.accounts.filter(acc => acc.password === pw);
+        if (matchingAccounts.length === 0) { showError('Invalid password'); return; }
+        
+        if (matchingAccounts.length === 1) {
+            sessionStorage.setItem('userPhone', phone);
+            sessionStorage.setItem('currentAccountId', matchingAccounts[0].accountId);
+            sessionStorage.setItem('currentPage', 'home.html');
+            window.location.href = 'home.html';
+        } else {
+            const modal = document.createElement('div');
+            modal.className = 'custom-modal';
+            let listHtml = '<h4>Select Account</h4><ul class="account-list">';
+            matchingAccounts.forEach(acc => {
+                const displayName = (acc.name || '') + (acc.father ? ' ' + acc.father.charAt(0) + '.' : '');
+                listHtml += `<li data-id="${acc.accountId}">${displayName || 'Unnamed'}</li>`;
+            });
+            listHtml += '</ul><div class="modal-buttons"><button class="modal-cancel">Cancel</button></div>';
+            modal.innerHTML = listHtml;
+            document.body.appendChild(modal);
+            
+            modal.querySelectorAll('.account-list li').forEach(li => {
+                li.onclick = () => {
+                    const accId = li.getAttribute('data-id');
+                    sessionStorage.setItem('userPhone', phone);
+                    sessionStorage.setItem('currentAccountId', accId);
+                    sessionStorage.setItem('currentPage', 'home.html');
+                    window.location.href = 'home.html';
+                };
+            });
+            modal.querySelector('.modal-cancel').onclick = () => modal.remove();
+        }
+    };
+
+    document.getElementById('registerBtn').onclick = () => {
+        let rawPhone = document.getElementById('regPhone').value.trim();
+        let phone = normalizePhone(rawPhone);
+        let name = document.getElementById('regName').value.trim();
+        let father = document.getElementById('regFatherName').value.trim();
+        let grand = document.getElementById('regGrandFatherName').value.trim();
+        let pw = document.getElementById('regPassword').value.trim();
+        let cpw = document.getElementById('regConfirmPassword').value.trim();
+
+        if (!rawPhone) { showError('Phone is required'); return; }
+        if (!name) { showError('Name is required'); return; }
+        if (!father) { showError('Father\'s name is required'); return; }
+        if (!pw) { showError('Password is required'); return; }
+        if (!cpw) { showError('Confirm password is required'); return; }
+        if (!phone) { showError('Invalid phone number'); return; }
+        if (!isValidPassword(pw)) { showError('Password must be 6 digits'); return; }
+        if (pw !== cpw) { showError('Passwords do not match'); return; }
+
+        let users = JSON.parse(localStorage.getItem('users') || '{}');
+        let phoneData = users[phone];
+        if (!phoneData) {
+            phoneData = { accounts: [] };
+        }
+        if (phoneData.accounts.length >= 3) {
+            showError('Maximum 3 accounts per phone number');
+            return;
+        }
+        const newAccountId = Date.now() + '-' + Math.random().toString(36);
+        const newAccount = {
+            accountId: newAccountId,
+            name: name,
+            father: father,
+            grand: grand,
+            password: pw,
+            plan: 'free',
+            profilePic: null,
+            examHistory: [],
+            dashboardRange: 'last7days',
+            dashboardCategory: 'national'
+        };
+        phoneData.accounts.push(newAccount);
+        users[phone] = phoneData;
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        sessionStorage.setItem('userPhone', phone);
+        sessionStorage.setItem('currentAccountId', newAccountId);
+        sessionStorage.setItem('currentPage', 'home.html');
+        window.location.href = 'home.html';
+    };
+
+    history.replaceState({ page: 'login' }, '', '#login');
+</script>
+</body>
+</html>
