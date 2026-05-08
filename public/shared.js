@@ -1,71 +1,112 @@
-// shared.js - Bete Fetena
-// Backend URL (Render)
-window.API_BASE_URL = 'https://bete-fetena-backend.onrender.com';
+// shared.js - Bete Fetena (Full MongoDB integration)
+window.API_BASE_URL = 'https://bete-fetena-backend.onrender.com'; // ✅ Change if your Render URL is different
 
-function getUserPhone() {
-    return sessionStorage.getItem('userPhone');
-}
+// ------------------------------------------------------------------
+// Current user cache (holds data after login / page load)
+let cachedUserData = null;
 
-function getCurrentAccountId() {
-    return sessionStorage.getItem('currentAccountId');
-}
+// ------------------------------------------------------------------
+// Session helpers
+function getUserPhone() { return sessionStorage.getItem('userPhone'); }
+function getCurrentAccountId() { return sessionStorage.getItem('currentAccountId'); }
 
-function getCurrentUserData() {
+// Fetch fresh user data from backend (async)
+async function refreshCurrentUser() {
+    const phone = getUserPhone();
+    const accountId = getCurrentAccountId();
+    if (!phone || !accountId) {
+        cachedUserData = null;
+        return null;
+    }
     try {
-        const phone = getUserPhone();
-        const accountId = getCurrentAccountId();
-        if (!phone || !accountId) return null;
-        const users = JSON.parse(localStorage.getItem('users') || '{}');
-        const phoneData = users[phone];
-        if (!phoneData || !phoneData.accounts) return null;
-        const account = phoneData.accounts.find(acc => acc.accountId === accountId);
-        if (!account) return null;
-        return { phone, phoneData, account };
-    } catch(e) { return null; }
+        const res = await fetch(`${window.API_BASE_URL}/api/users/getData`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, accountId })
+        });
+        if (!res.ok) throw new Error('Failed to fetch user data');
+        const data = await res.json();
+        cachedUserData = { phone, account: data.account };
+        return cachedUserData;
+    } catch (err) {
+        console.error('refreshCurrentUser error:', err);
+        cachedUserData = null;
+        return null;
+    }
 }
 
-function getUserExamHistory() {
-    const data = getCurrentUserData();
-    return data ? (data.account.examHistory || []) : [];
+// Synchronous getter (may return stale data until refreshCurrentUser is called)
+function getCurrentUserData() { return cachedUserData; }
+
+// ------------------------------------------------------------------
+// Exam history
+async function getUserExamHistory() {
+    const user = await refreshCurrentUser();
+    return user ? (user.account.examHistory || []) : [];
 }
 
-function saveUserExamHistory(history) {
-    const data = getCurrentUserData();
-    if (!data) return;
-    data.account.examHistory = history;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    users[data.phone] = data.phoneData;
-    localStorage.setItem('users', JSON.stringify(users));
+async function saveUserExamHistory(history) {
+    const phone = getUserPhone();
+    const accountId = getCurrentAccountId();
+    if (!phone || !accountId) return;
+    try {
+        await fetch(`${window.API_BASE_URL}/api/users/updateAccount`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, accountId, updates: { examHistory: history } })
+        });
+        if (cachedUserData) cachedUserData.account.examHistory = history;
+    } catch (err) {
+        console.error('saveUserExamHistory error:', err);
+    }
 }
 
-function getUserDashboardRange() {
-    const data = getCurrentUserData();
-    return data ? (data.account.dashboardRange || 'last7days') : 'last7days';
+// ------------------------------------------------------------------
+// Dashboard preferences
+async function getUserDashboardRange() {
+    const user = await refreshCurrentUser();
+    return user ? (user.account.dashboardRange || 'last7days') : 'last7days';
 }
 
-function setUserDashboardRange(range) {
-    const data = getCurrentUserData();
-    if (!data) return;
-    data.account.dashboardRange = range;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    users[data.phone] = data.phoneData;
-    localStorage.setItem('users', JSON.stringify(users));
+async function setUserDashboardRange(range) {
+    const phone = getUserPhone();
+    const accountId = getCurrentAccountId();
+    if (!phone || !accountId) return;
+    try {
+        await fetch(`${window.API_BASE_URL}/api/users/updateAccount`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, accountId, updates: { dashboardRange: range } })
+        });
+        if (cachedUserData) cachedUserData.account.dashboardRange = range;
+    } catch (err) {
+        console.error('setUserDashboardRange error:', err);
+    }
 }
 
-function getUserDashboardCategory() {
-    const data = getCurrentUserData();
-    return data ? (data.account.dashboardCategory || 'national') : 'national';
+async function getUserDashboardCategory() {
+    const user = await refreshCurrentUser();
+    return user ? (user.account.dashboardCategory || 'national') : 'national';
 }
 
-function setUserDashboardCategory(cat) {
-    const data = getCurrentUserData();
-    if (!data) return;
-    data.account.dashboardCategory = cat;
-    const users = JSON.parse(localStorage.getItem('users') || '{}');
-    users[data.phone] = data.phoneData;
-    localStorage.setItem('users', JSON.stringify(users));
+async function setUserDashboardCategory(cat) {
+    const phone = getUserPhone();
+    const accountId = getCurrentAccountId();
+    if (!phone || !accountId) return;
+    try {
+        await fetch(`${window.API_BASE_URL}/api/users/updateAccount`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, accountId, updates: { dashboardCategory: cat } })
+        });
+        if (cachedUserData) cachedUserData.account.dashboardCategory = cat;
+    } catch (err) {
+        console.error('setUserDashboardCategory error:', err);
+    }
 }
 
+// ------------------------------------------------------------------
+// Authentication guard (async-free, uses sessionStorage)
 function checkAuth() {
     const phone = getUserPhone();
     const accountId = getCurrentAccountId();
@@ -73,17 +114,14 @@ function checkAuth() {
         window.location.href = 'index.html';
         return false;
     }
-    const data = getCurrentUserData();
-    if (!data) {
-        window.location.href = 'index.html';
-        return false;
-    }
+    // Note: refreshCurrentUser will be called on each page load
     return true;
 }
 
+// Logout (clear session)
 function logout() {
     sessionStorage.clear();
-    localStorage.removeItem('currentAccountId');
+    cachedUserData = null;
     window.location.href = 'index.html';
 }
 
@@ -91,6 +129,8 @@ function confirmLogout() {
     showConfirmModal('Are you sure you want to log out?', logout);
 }
 
+// ------------------------------------------------------------------
+// Modals (unchanged, but kept for compatibility)
 function showConfirmModal(message, onConfirm, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'custom-modal';
@@ -151,6 +191,8 @@ function maskPhone(phone) {
     return phone.substring(0,4) + '•'.repeat(phone.length-7) + phone.substring(phone.length-3);
 }
 
+// ------------------------------------------------------------------
+// Dark mode & sidebar (unchanged)
 function initDarkMode() {
     if (localStorage.getItem('darkMode') === 'true') {
         document.body.classList.add('dark');
@@ -202,7 +244,7 @@ function navigateTo(url) {
 }
 
 function refreshNavbarProfile() {
-    // optional
+    // optional – called after profile pic change
 }
 
 function switchToAccount(accountId) {
