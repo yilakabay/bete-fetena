@@ -404,37 +404,10 @@
 
 <script src="shared.js"></script>
 <script>
-    if (!checkAuth()) { /* redirected */ }
-    sessionStorage.setItem('currentPage', 'dashboard.html');
-    initDarkMode();
-    buildSidebar('dashboard');
-
-    function updateDarkModeToggleIcon() {
-        const icon = document.getElementById('darkModeIcon');
-        const text = document.getElementById('darkModeText');
-        if (document.body.classList.contains('dark')) {
-            icon.src = 'Sun.png';
-            text.textContent = 'Light Mode';
-        } else {
-            icon.src = 'Moon.png';
-            text.textContent = 'Dark Mode';
-        }
-    }
-
-    const originalToggle = toggleDarkMode;
-    toggleDarkMode = function() {
-        originalToggle();
-        updateDarkModeToggleIcon();
-        updateChartsForTheme();
-    };
-
-    document.getElementById('darkModeToggle').addEventListener('click', function(e) { e.preventDefault(); toggleDarkMode(); });
-    updateDarkModeToggleIcon();
-
+    // Dashboard with full backend integration
     let barChart = null, lineChart = null, currentSubjects = [], currentAvgScores = [], currentFiltered = null, currentSelectedBarIndex = -1;
-    let subjectOvertimeMap = {};
-    let subjectLowScoreMap = {};
-    let subjectTotalQuestionsMap = {};
+    let subjectOvertimeMap = {}, subjectLowScoreMap = {}, subjectTotalQuestionsMap = {};
+    let allHistory = [];
 
     const barIconPlugin = {
         id: 'barIconPlugin',
@@ -489,29 +462,17 @@
             const ctx = chart.ctx;
             const yScale = chart.scales.y;
             const xScale = chart.scales.x;
-            const dataset = chart.data.datasets[0];
-            if (!dataset || !dataset.data) return;
             const subjects = chart.data.labels;
             for (let i = 0; i < subjects.length; i++) {
-                const subject = subjects[i];
-                const totalQ = subjectTotalQuestionsMap[subject];
+                const totalQ = subjectTotalQuestionsMap[subjects[i]];
                 if (!totalQ) continue;
                 const y = yScale.getPixelForValue(totalQ);
                 const xLeft = xScale.getPixelForValue(i) - (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2;
                 const xRight = xScale.getPixelForValue(i) + (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2;
                 ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(xLeft, y);
-                ctx.lineTo(xRight, y);
-                ctx.strokeStyle = 'green';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.font = 'bold 9px Outfit, Arial';
-                ctx.fillStyle = 'green';
-                ctx.shadowBlur = 0;
-                ctx.fillText(`${totalQ}`, xLeft + 2, y - 2);
+                ctx.beginPath(); ctx.moveTo(xLeft, y); ctx.lineTo(xRight, y);
+                ctx.strokeStyle = 'green'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+                ctx.font = 'bold 9px Outfit, Arial'; ctx.fillStyle = 'green'; ctx.fillText(`${totalQ}`, xLeft + 2, y - 2);
                 ctx.restore();
             }
         }
@@ -558,7 +519,7 @@
                         const index = activeElements[0].index;
                         currentSelectedBarIndex = index;
                         const clickedSubject = subjects[index];
-                        const newColors = subjects.map((_, i) => getBarColors(isDark, index)(i));
+                        const newColors = subjects.map((_, i) => getBarColors(document.body.classList.contains('dark'), index)(i));
                         barChart.data.datasets[0].backgroundColor = newColors;
                         barChart.update();
                         document.getElementById('lineChartContainer').classList.add('show');
@@ -810,40 +771,29 @@
         return `${format(cutoff)} - ${format(now)}`;
     }
 
-    function filterHistory(range, category, historyRaw) {
+    function filterHistory(range) {
         const now = new Date();
         let cutoff = new Date();
         if (range === 'lastday') cutoff.setDate(now.getDate() - 1);
         else if (range === 'last7days') cutoff.setDate(now.getDate() - 7);
         else if (range === 'last30days') cutoff.setDate(now.getDate() - 30);
         else cutoff.setDate(now.getDate() - 7);
-        let filtered = historyRaw.filter(h => new Date(h.date) >= cutoff);
-        return category === 'national' ? filtered : [];
+        return allHistory.filter(h => new Date(h.date) >= cutoff);
     }
 
     function getCurrentAccountFullName() {
-        try {
-            const phone = getUserPhone();
-            if (!phone) return "Student";
-            const users = JSON.parse(localStorage.getItem('users') || '{}');
-            const phoneData = users[phone];
-            if (!phoneData || !phoneData.accounts) return "Student";
-            const currentAccountId = getCurrentAccountId();
-            const account = phoneData.accounts.find(acc => acc.accountId === currentAccountId);
-            if (!account) return "Student";
-            const name = account.name || '';
-            const father = account.father || '';
-            if (name && father) return `${name} ${father}`;
-            if (name) return name;
-            return "Student";
-        } catch (e) { return "Student"; }
+        const data = getCurrentUserData();
+        if (!data) return "Student";
+        const name = data.account.name || '';
+        const father = data.account.father || '';
+        if (name && father) return `${name} ${father}`;
+        if (name) return name;
+        return "Student";
     }
 
-    function printReport() {
-        const range = getUserDashboardRange();
-        const category = getUserDashboardCategory();
-        const historyRaw = getUserExamHistory();
-        const filtered = filterHistory(range, category, historyRaw);
+    async function printReport() {
+        const range = selectedRange;
+        const filtered = filterHistory(range);
         if (filtered.length === 0) { showMessageModal("No data to print."); return; }
         const dateRangeStr = getDateRangeString(range);
         const summary = getSubjectSummary(filtered);
@@ -859,41 +809,9 @@
 
         let tempBarChart = new Chart(barCtx, {
             type: 'bar',
-            data: {
-                labels: subjects,
-                datasets: [{ label: 'Average Score (Correct Answers)', data: avgScores, backgroundColor: printBarColors, borderColor: '#333', borderWidth: 1 }]
-            },
-            options: {
-                responsive: false, maintainAspectRatio: true,
-                scales: {
-                    y: { beginAtZero: true, max: maxQuestions, ticks: { stepSize: Math.ceil(maxQuestions / 5) } },
-                    x: { ticks: { color: "#00008B", font: { weight: "bold" } } }
-                }
-            },
-            plugins: [{
-                id: 'printGreenLine',
-                afterDraw(chart) {
-                    const ctx = chart.ctx;
-                    const yScale = chart.scales.y;
-                    const xScale = chart.scales.x;
-                    const subjects = chart.data.labels;
-                    for (let i = 0; i < subjects.length; i++) {
-                        const subject = subjects[i];
-                        const totalQ = subjectTotalQuestionsMap[subject];
-                        if (!totalQ) continue;
-                        const y = yScale.getPixelForValue(totalQ);
-                        const xLeft = xScale.getPixelForValue(i) - (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2;
-                        const xRight = xScale.getPixelForValue(i) + (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2;
-                        ctx.save();
-                        ctx.beginPath(); ctx.moveTo(xLeft, y); ctx.lineTo(xRight, y);
-                        ctx.strokeStyle = 'green'; ctx.lineWidth = 2;
-                        ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
-                        ctx.font = 'bold 9px Arial'; ctx.fillStyle = 'green';
-                        ctx.fillText(`${totalQ}`, xLeft + 2, y - 2);
-                        ctx.restore();
-                    }
-                }
-            }]
+            data: { labels: subjects, datasets: [{ label: 'Average Score (Correct Answers)', data: avgScores, backgroundColor: printBarColors, borderColor: '#333', borderWidth: 1 }] },
+            options: { responsive: false, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: maxQuestions, ticks: { stepSize: Math.ceil(maxQuestions / 5) } } } },
+            plugins: [{ id: 'printGreenLine', afterDraw(chart) { const ctx = chart.ctx, yScale = chart.scales.y, xScale = chart.scales.x, subjects = chart.data.labels; for (let i = 0; i < subjects.length; i++) { const totalQ = subjectTotalQuestionsMap[subjects[i]]; if (!totalQ) continue; const y = yScale.getPixelForValue(totalQ), xLeft = xScale.getPixelForValue(i) - (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2, xRight = xScale.getPixelForValue(i) + (xScale.getPixelForValue(1) - xScale.getPixelForValue(0)) / 2; ctx.save(); ctx.beginPath(); ctx.moveTo(xLeft, y); ctx.lineTo(xRight, y); ctx.strokeStyle = 'green'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]); ctx.font = 'bold 9px Arial'; ctx.fillStyle = 'green'; ctx.fillText(`${totalQ}`, xLeft + 2, y - 2); ctx.restore(); } } }]
         });
 
         let lineCanvas = null;
@@ -905,53 +823,7 @@
             lineCanvas = document.createElement('canvas');
             lineCanvas.width = 800; lineCanvas.height = 400;
             const lineCtx = lineCanvas.getContext('2d');
-            new Chart(lineCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: `Score (Correct Answers) - ${clickedSubject}`, data: scores, borderColor: '#00008B', tension: 0.1, fill: false, pointRadius: 6, pointBackgroundColor: 'transparent', pointBorderColor: 'transparent' }],
-                    lowScoreFlags: lowScoreFlags, lateFlags: lateFlags
-                },
-                options: { responsive: false, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: maxScore, ticks: { stepSize: Math.ceil(maxScore / 5) } } } },
-                plugins: [{
-                    id: 'printHalfDots',
-                    afterDatasetDraw(chart) {
-                        const { ctx } = chart;
-                        const meta = chart.getDatasetMeta(0);
-                        const points = meta.data;
-                        const lowFlags = chart.data.lowScoreFlags;
-                        const lateFlags = chart.data.lateFlags;
-                        if (!points || !points.length) return;
-                        const defaultColor = '#00008B';
-                        for (let i = 0; i < points.length; i++) {
-                            const point = points[i];
-                            const x = point.x; const y = point.y;
-                            const isLow = lowFlags[i]; const isLate = lateFlags[i];
-                            const radius = 6;
-                            if (!isLow && !isLate) {
-                                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                                ctx.fillStyle = defaultColor; ctx.fill();
-                                ctx.strokeStyle = '#333'; ctx.stroke(); continue;
-                            }
-                            if (isLow && isLate) {
-                                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                                ctx.fillStyle = '#ff4444'; ctx.fill();
-                                ctx.strokeStyle = '#333'; ctx.stroke();
-                            } else {
-                                if (isLow) {
-                                    ctx.beginPath(); ctx.arc(x, y, radius, Math.PI/2, 3*Math.PI/2); ctx.fillStyle = '#ff4444'; ctx.fill();
-                                    ctx.beginPath(); ctx.arc(x, y, radius, 3*Math.PI/2, Math.PI/2); ctx.fillStyle = defaultColor; ctx.fill();
-                                } else if (isLate) {
-                                    ctx.beginPath(); ctx.arc(x, y, radius, 3*Math.PI/2, Math.PI/2); ctx.fillStyle = '#ff4444'; ctx.fill();
-                                    ctx.beginPath(); ctx.arc(x, y, radius, Math.PI/2, 3*Math.PI/2); ctx.fillStyle = defaultColor; ctx.fill();
-                                }
-                                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                                ctx.strokeStyle = '#333'; ctx.stroke();
-                            }
-                        }
-                    }
-                }]
-            });
+            new Chart(lineCtx, { type: 'line', data: { labels, datasets: [{ label: `Score (Correct Answers) - ${clickedSubject}`, data: scores, borderColor: '#00008B', tension: 0.1, fill: false, pointRadius: 6, pointBackgroundColor: 'transparent', pointBorderColor: 'transparent' }], lowScoreFlags, lateFlags }, options: { responsive: false, maintainAspectRatio: true, scales: { y: { beginAtZero: true, max: maxScore } } }, plugins: [{ id: 'printHalfDots', afterDatasetDraw(chart) { const { ctx } = chart, meta = chart.getDatasetMeta(0), points = meta.data, lowFlags = chart.data.lowScoreFlags, lateFlags = chart.data.lateFlags; if (!points || !points.length) return; for (let i = 0; i < points.length; i++) { const point = points[i], x = point.x, y = point.y, isLow = lowFlags[i], isLate = lateFlags[i], radius = 6; if (!isLow && !isLate) { ctx.beginPath(); ctx.arc(x, y, radius, 0, 2*Math.PI); ctx.fillStyle = '#00008B'; ctx.fill(); ctx.strokeStyle = '#333'; ctx.stroke(); continue; } if (isLow && isLate) { ctx.beginPath(); ctx.arc(x, y, radius, 0, 2*Math.PI); ctx.fillStyle = '#ff4444'; ctx.fill(); ctx.strokeStyle = '#333'; ctx.stroke(); } else { if (isLow) { ctx.beginPath(); ctx.arc(x, y, radius, Math.PI/2, 3*Math.PI/2); ctx.fillStyle = '#ff4444'; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, radius, 3*Math.PI/2, Math.PI/2); ctx.fillStyle = '#00008B'; ctx.fill(); } else if (isLate) { ctx.beginPath(); ctx.arc(x, y, radius, 3*Math.PI/2, Math.PI/2); ctx.fillStyle = '#ff4444'; ctx.fill(); ctx.beginPath(); ctx.arc(x, y, radius, Math.PI/2, 3*Math.PI/2); ctx.fillStyle = '#00008B'; ctx.fill(); } ctx.beginPath(); ctx.arc(x, y, radius, 0, 2*Math.PI); ctx.strokeStyle = '#333'; ctx.stroke(); } } } }] });
         }
 
         setTimeout(() => {
@@ -1022,14 +894,14 @@
             <thead><tr style="background:transparent;color:#00008B;font-weight:bold;">
                 <th style="border:1px solid #000;padding:8px;">No.</th>
                 <th style="border:1px solid #000;padding:8px;">Subject</th>
-                <th style="border:1px solid #000;padding:8px;">No. of Exams</th>
-                <th style="border:1px solid #000;padding:8px;">Total Questions</th>
+                <th style="border:1px solid #000;padding:8px;">Exams</th>
+                <th style="border:1px solid #000;padding:8px;">Total Q</th>
                 <th style="border:1px solid #000;padding:8px;">Total Score</th>
                 <th style="border:1px solid #000;padding:8px;">Avg Score</th>
                 <th style="border:1px solid #000;padding:8px;">Percentage (%)</th>
                 <th style="border:1px solid #000;padding:8px;">Total Time</th>
                 <th style="border:1px solid #000;padding:8px;">Avg Time</th>
-            </td></thead><tbody>`;
+            </tr></thead><tbody>`;
         summary.rows.forEach(row => {
             const totalTimeColor = row.isLateTime ? 'color:red;' : '';
             const scoreColor = row.isLowScore ? 'color:red;' : '';
@@ -1057,13 +929,12 @@
             <td style="border:1px solid #000;padding:8px;${scoreColorAll}">${summary.overallPercentage.toFixed(1)}</td>
             <td style="border:1px solid #000;padding:8px;${totalTimeColorAll}">${formatTime(summary.grandTotalTime)}</td>
             <td style="border:1px solid #000;padding:8px;">-</td>
-        </tr></tbody>`;
+        </table></tbody>`;
         return tableHtml;
     }
 
-    function renderDashboard() {
-        const historyRaw = getUserExamHistory();
-        if (historyRaw.length === 0) {
+    async function renderDashboard() {
+        if (allHistory.length === 0) {
             document.getElementById("dynamicContent").innerHTML = `
                 <div class="empty-state">
                     <div class="empty-header">
@@ -1079,13 +950,12 @@
             `;
             return;
         }
-        let selectedRange = getUserDashboardRange();
-        let selectedCategory = getUserDashboardCategory();
         const rangeNames = { 'lastday':'Last day', 'last7days':'Last 7 days', 'last30days':'Last 30 days' };
         const categoryNames = { 'national':'National/Ministry/Exit', 'school':'School/Institution Standard' };
 
         function renderDashboardWithRangeAndCategory(range, category) {
-            const filtered = filterHistory(range, category, historyRaw);
+            const filtered = filterHistory(range);
+            currentFiltered = filtered;
             if (filtered.length === 0) {
                 document.getElementById("dynamicContent").innerHTML = `
                     <div>
@@ -1106,7 +976,6 @@
                 attachDropdownEvents(range, category);
                 return;
             }
-            currentFiltered = filtered;
             const { subjects, avgScores, maxQuestions } = getSubjectAverageScores(filtered);
             currentSubjects = subjects; currentAvgScores = avgScores;
             const summary = getSubjectSummary(filtered);
@@ -1156,17 +1025,14 @@
                             <div class="custom-dropdown" id="timeDropdown"><div class="dropdown-btn"><span id="selectedRangeText">${rangeNames[range]}</span><span class="dropdown-arrow" id="timeArrow">›</span></div><ul class="dropdown-list" id="timeList"><li data-range="lastday">Last day</li><li data-range="last7days">Last 7 days</li><li data-range="last30days">Last 30 days</li></ul></div>
                         </div>
                     </div>
-
                     <div class="chart-card">
                         <p class="section-label">Average Score by Subject</p>
                         <canvas id="subjectChart" width="400" height="200" style="max-width:100%;height:auto;"></canvas>
                     </div>
-
                     <div id="lineChartContainer" class="chart-card">
                         <p class="section-label">Exam Scores Trend</p>
                         <canvas id="trendChart" width="400" height="200" style="max-width:100%;height:auto;"></canvas>
                     </div>
-
                     <div class="table-card">
                         <p class="section-label">Subject Performance Summary</p>
                         <table class="summary-table">
@@ -1178,7 +1044,6 @@
                             <tbody>${tableRowsHtml}</tbody>
                         </table>
                     </div>
-
                     <div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 24px;gap:10px;">
                         <button onclick="navigateTo('exams.html')" class="back-btn">‹ Back to Exams</button>
                         <button class="print-btn" id="printReportBtn">Print Report</button>
@@ -1187,10 +1052,8 @@
             `;
             document.getElementById("dynamicContent").innerHTML = html;
             createBarChart(subjects, avgScores, maxQuestions, -1);
-
             const lineCont = document.getElementById('lineChartContainer');
             lineCont.classList.remove('show');
-
             attachDropdownEvents(range, category);
             document.getElementById('printReportBtn').addEventListener('click', printReport);
         }
@@ -1202,7 +1065,16 @@
             if (catDropdown && catList) {
                 catDropdown.querySelector('.dropdown-btn').addEventListener('click', (e) => { e.stopPropagation(); catList.classList.toggle('show'); if (catArrow) catArrow.classList.toggle('open', catList.classList.contains('show')); });
                 document.querySelectorAll('#categoryList li').forEach(li => {
-                    li.addEventListener('click', (e) => { e.stopPropagation(); const newCat = li.getAttribute('data-category'); setUserDashboardCategory(newCat); document.getElementById('selectedCategoryText').innerText = li.innerText; catList.classList.remove('show'); if (catArrow) catArrow.classList.remove('open'); renderDashboardWithRangeAndCategory(getUserDashboardRange(), newCat); });
+                    li.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const newCat = li.getAttribute('data-category');
+                        await setUserDashboardCategory(newCat);
+                        selectedCategory = newCat;
+                        document.getElementById('selectedCategoryText').innerText = li.innerText;
+                        catList.classList.remove('show');
+                        if (catArrow) catArrow.classList.remove('open');
+                        renderDashboardWithRangeAndCategory(selectedRange, newCat);
+                    });
                 });
             }
             const timeDropdown = document.getElementById('timeDropdown');
@@ -1211,7 +1083,16 @@
             if (timeDropdown && timeList) {
                 timeDropdown.querySelector('.dropdown-btn').addEventListener('click', (e) => { e.stopPropagation(); timeList.classList.toggle('show'); if (timeArrow) timeArrow.classList.toggle('open', timeList.classList.contains('show')); });
                 document.querySelectorAll('#timeList li').forEach(li => {
-                    li.addEventListener('click', (e) => { e.stopPropagation(); const newRange = li.getAttribute('data-range'); setUserDashboardRange(newRange); document.getElementById('selectedRangeText').innerText = li.innerText; timeList.classList.remove('show'); if (timeArrow) timeArrow.classList.remove('open'); renderDashboardWithRangeAndCategory(newRange, getUserDashboardCategory()); });
+                    li.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const newRange = li.getAttribute('data-range');
+                        await setUserDashboardRange(newRange);
+                        selectedRange = newRange;
+                        document.getElementById('selectedRangeText').innerText = li.innerText;
+                        timeList.classList.remove('show');
+                        if (timeArrow) timeArrow.classList.remove('open');
+                        renderDashboardWithRangeAndCategory(newRange, selectedCategory);
+                    });
                 });
             }
             document.addEventListener('click', function closeDropdowns(e) {
@@ -1223,7 +1104,17 @@
         renderDashboardWithRangeAndCategory(selectedRange, selectedCategory);
     }
 
-    renderDashboard();
+    // Initial load: fetch history and settings
+    (async function initDashboard() {
+        if (!checkAuth()) return;
+        // Ensure shared.js functions are available
+        allHistory = await getUserExamHistory();
+        selectedRange = await getUserDashboardRange();
+        selectedCategory = await getUserDashboardCategory();
+        initDarkMode();
+        buildSidebar('dashboard');
+        renderDashboard();
+    })();
 </script>
 </body>
 </html>
