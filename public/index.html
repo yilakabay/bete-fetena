@@ -77,6 +77,8 @@
 </div>
 
 <script>
+    const API_BASE_URL = 'https://bete-fetena-backend.onrender.com'; // ✅ Replace with your Render URL
+
     function normalizePhone(phone) {
         let p = phone.trim();
         if (/^09[0-9]{8}$/.test(p)) return '+251' + p.substring(1);
@@ -86,6 +88,7 @@
         return null;
     }
     function isValidPassword(p) { return /^\d{6}$/.test(p); }
+
     function showError(msg) {
         let e = document.getElementById('errorBox');
         e.textContent = msg;
@@ -93,6 +96,7 @@
         setTimeout(() => e.classList.add('hidden'), 3000);
     }
 
+    // Eye toggles
     const loginPassword = document.getElementById('loginPassword');
     const toggleLogin = document.getElementById('toggleLoginPassword');
     toggleLogin.addEventListener('click', () => {
@@ -109,6 +113,7 @@
         toggleReg.querySelector('img').src = type === 'password' ? 'Eye.png' : 'Slashed_Eye.png';
     });
 
+    // Switch forms
     document.getElementById('showRegister').onclick = () => {
         document.getElementById('loginForm').classList.add('hidden');
         document.getElementById('registerForm').classList.remove('hidden');
@@ -130,85 +135,54 @@
         history.replaceState({ page: 'login' }, '', '#login');
     };
 
-    document.getElementById('loginBtn').onclick = () => {
+    // LOGIN (using backend)
+    document.getElementById('loginBtn').onclick = async () => {
         let rawPhone = document.getElementById('loginPhone').value.trim();
         let phone = normalizePhone(rawPhone);
         let pw = document.getElementById('loginPassword').value.trim();
         if (!phone) { showError('Invalid phone number'); return; }
         if (!isValidPassword(pw)) { showError('Password must be 6 digits'); return; }
-        
-        let users = JSON.parse(localStorage.getItem('users') || '{}');
-        let phoneData = users[phone];
-        if (!phoneData) { showError('Phone number not registered'); return; }
-        
-        if (!phoneData.accounts) {
-            if (phoneData.password !== pw) { showError('Invalid password'); return; }
-            const newAccountId = 'default-' + Date.now();
-            const newAccount = {
-                accountId: newAccountId,
-                name: phoneData.name || '',
-                father: phoneData.father || '',
-                grand: phoneData.grand || '',
-                password: phoneData.password,
-                plan: phoneData.plan || 'free',
-                profilePic: phoneData.profilePic || null,
-                examHistory: phoneData.examHistory || [],
-                dashboardRange: phoneData.dashboardRange || 'last7days',
-                dashboardCategory: phoneData.dashboardCategory || 'national'
-            };
-            phoneData.accounts = [newAccount];
-            delete phoneData.name;
-            delete phoneData.father;
-            delete phoneData.grand;
-            delete phoneData.password;
-            delete phoneData.plan;
-            delete phoneData.profilePic;
-            delete phoneData.examHistory;
-            delete phoneData.dashboardRange;
-            delete phoneData.dashboardCategory;
-            users[phone] = phoneData;
-            localStorage.setItem('users', JSON.stringify(users));
-            sessionStorage.setItem('userPhone', phone);
-            sessionStorage.setItem('currentAccountId', newAccountId);
-            sessionStorage.setItem('currentPage', 'home.html');
-            window.location.href = 'home.html';
-            return;
-        }
-        
-        const matchingAccounts = phoneData.accounts.filter(acc => acc.password === pw);
-        if (matchingAccounts.length === 0) { showError('Invalid password'); return; }
-        
-        if (matchingAccounts.length === 1) {
-            sessionStorage.setItem('userPhone', phone);
-            sessionStorage.setItem('currentAccountId', matchingAccounts[0].accountId);
-            sessionStorage.setItem('currentPage', 'home.html');
-            window.location.href = 'home.html';
-        } else {
-            const modal = document.createElement('div');
-            modal.className = 'custom-modal';
-            let listHtml = '<h4>Select Account</h4><ul class="account-list">';
-            matchingAccounts.forEach(acc => {
-                const displayName = (acc.name || '') + (acc.father ? ' ' + acc.father.charAt(0) + '.' : '');
-                listHtml += `<li data-id="${acc.accountId}">${displayName || 'Unnamed'}</li>`;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/users/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, password: pw })
             });
-            listHtml += '</ul><div class="modal-buttons"><button class="modal-cancel">Cancel</button></div>';
-            modal.innerHTML = listHtml;
-            document.body.appendChild(modal);
-            
-            modal.querySelectorAll('.account-list li').forEach(li => {
-                li.onclick = () => {
-                    const accId = li.getAttribute('data-id');
-                    sessionStorage.setItem('userPhone', phone);
-                    sessionStorage.setItem('currentAccountId', accId);
-                    sessionStorage.setItem('currentPage', 'home.html');
-                    window.location.href = 'home.html';
-                };
-            });
-            modal.querySelector('.modal-cancel').onclick = () => modal.remove();
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Login failed');
+            if (data.accounts.length === 1) {
+                sessionStorage.setItem('userPhone', phone);
+                sessionStorage.setItem('currentAccountId', data.accounts[0].accountId);
+                window.location.href = 'home.html';
+            } else {
+                // Multiple accounts – show selection modal
+                const modal = document.createElement('div');
+                modal.className = 'custom-modal';
+                let listHtml = '<h4>Select Account</h4><ul class="account-list">';
+                data.accounts.forEach(acc => {
+                    const dn = (acc.name || '') + (acc.father ? ' ' + acc.father.charAt(0) + '.' : '');
+                    listHtml += `<li data-id="${acc.accountId}">${dn || 'Unnamed'}</li>`;
+                });
+                listHtml += '</ul><div class="modal-buttons"><button class="modal-cancel">Cancel</button></div>';
+                modal.innerHTML = `<div class="modal-content">${listHtml}</div>`;
+                document.body.appendChild(modal);
+                modal.querySelectorAll('.account-list li').forEach(li => {
+                    li.onclick = () => {
+                        sessionStorage.setItem('userPhone', phone);
+                        sessionStorage.setItem('currentAccountId', li.getAttribute('data-id'));
+                        window.location.href = 'home.html';
+                    };
+                });
+                modal.querySelector('.modal-cancel').onclick = () => modal.remove();
+            }
+        } catch (err) {
+            showError(err.message);
         }
     };
 
-    document.getElementById('registerBtn').onclick = () => {
+    // REGISTER (using backend)
+    document.getElementById('registerBtn').onclick = async () => {
         let rawPhone = document.getElementById('regPhone').value.trim();
         let phone = normalizePhone(rawPhone);
         let name = document.getElementById('regName').value.trim();
@@ -226,36 +200,20 @@
         if (!isValidPassword(pw)) { showError('Password must be 6 digits'); return; }
         if (pw !== cpw) { showError('Passwords do not match'); return; }
 
-        let users = JSON.parse(localStorage.getItem('users') || '{}');
-        let phoneData = users[phone];
-        if (!phoneData) {
-            phoneData = { accounts: [] };
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/users/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone, name, father, grand, password: pw })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Registration failed');
+            sessionStorage.setItem('userPhone', phone);
+            sessionStorage.setItem('currentAccountId', data.accountId);
+            window.location.href = 'home.html';
+        } catch (err) {
+            showError(err.message);
         }
-        if (phoneData.accounts.length >= 3) {
-            showError('Maximum 3 accounts per phone number');
-            return;
-        }
-        const newAccountId = Date.now() + '-' + Math.random().toString(36);
-        const newAccount = {
-            accountId: newAccountId,
-            name: name,
-            father: father,
-            grand: grand,
-            password: pw,
-            plan: 'free',
-            profilePic: null,
-            examHistory: [],
-            dashboardRange: 'last7days',
-            dashboardCategory: 'national'
-        };
-        phoneData.accounts.push(newAccount);
-        users[phone] = phoneData;
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        sessionStorage.setItem('userPhone', phone);
-        sessionStorage.setItem('currentAccountId', newAccountId);
-        sessionStorage.setItem('currentPage', 'home.html');
-        window.location.href = 'home.html';
     };
 
     history.replaceState({ page: 'login' }, '', '#login');
