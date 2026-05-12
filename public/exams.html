@@ -1256,8 +1256,8 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch(err) { bodyDiv.innerHTML = `<p style="color:var(--wrong-color);">Error: ${err.message}</p>`; }
         };
 
-        // ----- Finish exam -----
-        function finishExam() {
+        // ----- Finish exam - FIXED with async history save -----
+        async function finishExam() {
             if (timerInterval) clearInterval(timerInterval);
             isExamActive = false;
             let correct = 0;
@@ -1265,7 +1265,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const percentage = (correct / currentQuestions.length) * 100;
             const timeTaken = examTotalTime - timeRemaining;
             const result = { subject:selectedSubject, date:new Date().toISOString(), correct, total:currentQuestions.length, percentage, timeTaken, expectedTime:examTotalTime };
-            let history = getUserExamHistory(); history.push(result); saveUserExamHistory(history);
+            try {
+                // Await async MongoDB history functions from shared.js
+                let history = await getUserExamHistory();
+                history.push(result);
+                await saveUserExamHistory(history);
+            } catch(err) {
+                console.warn("Failed to save exam history to MongoDB:", err);
+            }
+            // Remove from generation queue after saving
             const examIndex = generationQueue.findIndex(g => g.subject === selectedSubject && g.status === 'completed');
             if (examIndex !== -1) { generationQueue.splice(examIndex,1); updateQueueUI(); }
             const questionsJson = JSON.stringify(currentQuestions).replace(/"/g,'&quot;');
